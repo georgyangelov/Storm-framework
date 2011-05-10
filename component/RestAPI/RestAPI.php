@@ -23,7 +23,9 @@ class RestAPI extends StormComponent
 					'document_all',
 					'document_by_id'
 				)
-			)
+			),
+			
+			'default' => 'index'
 		));
 	}
 	
@@ -49,12 +51,19 @@ class RestAPI extends StormComponent
     	return true;
     }
     
+    public function _404($method, $explicit)
+    {
+    	echo 'Ooops the page `'. $method .'` can\'t be found!';
+    	
+    	return true;
+    }
+    
     /**
      * Index page. Display information
      */
-    public function index($var)
+    public function index()
     {
-        return new Status(404);
+		return new Status(404);
     }
     
     /**

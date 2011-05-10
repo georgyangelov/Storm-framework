@@ -215,7 +215,7 @@ class VirtualPages
 	public static function Open404()
 	{
 		header("HTTP/1.0 404 Not Found");
-		
+		echo 'test';
 		if ( self::$Component404 != null && self::$Page404 != null )
 			return self::OpenPage(self::$Component404, self::$Page404);
 		else
@@ -237,7 +237,7 @@ class VirtualPages
 		{
 			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, self::$Variables);
 			
-			if ( $return instanceof Status && $return->getCode() == 404 )
+			if ( $return instanceof Status && $return->getInvoke() && $return->getCode() == 404 )
 				self::Open404();
 		}
 		catch ( NoSuchMethodException $e )
@@ -245,6 +245,10 @@ class VirtualPages
 			self::Open404();
 		}
 		catch ( InvalidParamsException $e )
+		{
+			self::Open404();
+		}
+		catch ( NoRequiredParamsException $e )
 		{
 			self::Open404();
 		}

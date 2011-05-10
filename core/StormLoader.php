@@ -84,6 +84,7 @@ class StormLoader
 		if ( is_null($name) )
 			$name = $this->instance->config['default'];
 		
+		$is404 = false;
 		try
 		{
 			if ( isset($this->instance->config['routes'][$name]) )
@@ -95,22 +96,47 @@ class StormLoader
 			elseif ( $this->GetReflection()->HasMethod($name) )
 				$p = self::getLazyParams($this->GetReflection()->GetMethod($name), $params);
 			else
-				throw new NoSuchMethodException();
+				throw new NoSuchMethodException($name);
+				
+			$r = $this->CallMethod($name, $p);
 		}
-		catch ( InvalidParamsException $e )
+		catch ( ParamsException $e )
 		{
-			$mage = $this->CallMagic('invalidParams', array( $name, $e->getName(), $e->getValue(), $e->getType() ));
+			$r = $this->CallMagic('invalidParams', array( $name, $e->getName(), $e->getValue(), $e->getType() ));
+			$name = '_invalidParams';
 			
-			if ( is_null($mage) )
+			if ( is_null($r) )
 				throw $e;
-			else
-				return $mage;
 		}
+		catch ( NoSuchMethodException $e )
+		{
+			$r = $this->call404( $e->getMethod() );
+			$is404 = true;
 			
-		$r = $this->CallMethod($name, $p);
+			if ( is_null($r) )
+				throw $e;
+		}
 		
 		if ( $r instanceof IStormResult )
-			return $r->ProcessResult();
+			$r->ProcessResult();
+		
+		if ( !$is404 && $r instanceof Status && $r->getInvoke() && $r->getCode() == 404 )
+		{
+			$p = $this->call404($name, true);
+			
+			if ( !is_null($p) )
+				$r = $p;
+		}
+		
+		return $r;
+	}
+	
+	private function call404($method, $explicit = false)
+	{
+		$r = $this->CallMagic('404', array( $method, $explicit ));
+		
+		if ( $r instanceof Status && $r->getCode() == 404 )
+			$r->used();
 			
 		return $r;
 	}
@@ -124,19 +150,27 @@ class StormLoader
 		});
 		$funcs = array_reverse($funcs);
 		
+		$lastExc = null;
 		foreach ( $funcs as $function )
 		{
 			try
 			{
 				return array( 'name' => $function, 'params' => $this->getLazyParams($reflect->getMethod($function), $params) );
-			} catch ( NoRequiredParamsException $e ) {  }
+			}
+			catch ( NoRequiredParamsException $e )
+			{
+				$lastExc = $e;
+			}
 		}
 		
-		throw new NoRequiredParamsException();
+		if ( $lastExc !== null )
+			throw $lastExc;
+		else
+			throw new Exception('This shouldn\'t be happening?!?!?');
 	}
 	
 	private static function getLazyParams($reflect, $vals = array())
-	{	
+	{
 		if ( $reflect->getNumberOfParameters() == 0 )
 			return array();
 		
@@ -163,7 +197,7 @@ class StormLoader
 			elseif ( $param->isOptional() )
 				$ar[] = $param->getDefaultValue();
 			else
-				throw new NoRequiredParamsException();
+				throw new NoRequiredParamsException($name, '', $type);
 		}
 		
 		return $ar;
@@ -214,9 +248,22 @@ class StormLoader
 	}
 }
 
-class NoSuchMethodException extends Exception { }
-class NoRequiredParamsException extends Exception { }
-class InvalidParamsException extends Exception
+class NoSuchMethodException extends Exception
+{
+	private $name;
+	
+	public function __construct($name)
+	{
+		$this->name = $name;
+	}
+	
+	public function getMethod()
+	{
+		return $this->name;
+	}
+}
+
+class ParamsException extends Exception
 {
 	private $type, $val, $name;
 	
@@ -244,4 +291,6 @@ class InvalidParamsException extends Exception
 		return $this->val;
 	}
 }
+class NoRequiredParamsException extends ParamsException { }
+class InvalidParamsException extends ParamsException { }
 ?>

@@ -5,7 +5,7 @@
  * @package Storm
  * @author Stormbreaker
  * @copyright 2011
- * @version 0.1
+ * @version 2.1
  * @access public
  */
 class Status implements IStormResult
@@ -54,10 +54,12 @@ class Status implements IStormResult
     );
     
     private $code;
+    private $invoke;
     
-    public function __construct($code)
+    public function __construct($code, $invokeMethods = true)
     {
         $this->code = $code;
+        $this->invoke = $invokeMethods;
     }
     
     public function ProcessResult()
@@ -65,9 +67,19 @@ class Status implements IStormResult
     	header(self::$codes[$this->code]);
     }
     
+    public function used()
+    {
+    	$this->invoke = false;
+    }
+    
     public function getCode()
     {
     	return $this->code;
+    }
+    
+    public function getInvoke()
+    {
+    	return $this->invoke;
     }
 }
 
