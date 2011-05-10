@@ -215,7 +215,7 @@ class VirtualPages
 	public static function Open404()
 	{
 		header("HTTP/1.0 404 Not Found");
-		echo 'test';
+		
 		if ( self::$Component404 != null && self::$Page404 != null )
 			return self::OpenPage(self::$Component404, self::$Page404);
 		else
