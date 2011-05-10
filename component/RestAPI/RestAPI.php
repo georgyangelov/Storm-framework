@@ -27,11 +27,26 @@ class RestAPI extends StormComponent
 		));
 	}
 	
-    public function _call($method, $params)
-    {
+	public function _load()
+	{
         layout::Unload();
-        
+	}
+	
+    public function _call($method, $params)
+    {        
         echo 'Called: '. $method .'('. implode(', ', $params) .');';
+    }
+    
+    public function _invalidParams($method, $name, $val, $type)
+    {
+    	echo 'Called _invalidParams('.$method.', '.$name.', '.$val.', '.$type.');';
+    	
+    	var_dump($method);
+    	var_dump($name);
+    	var_dump($val);
+    	var_dump($type);
+    	
+    	return true;
     }
     
     /**
@@ -56,7 +71,7 @@ class RestAPI extends StormComponent
      * 
      * @param int
      */
-    public function user_by_id($id)
+    public function user_by_id($id__int)
     {
     	
         return;

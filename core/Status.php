@@ -64,6 +64,11 @@ class Status implements IStormResult
     {
     	header(self::$codes[$this->code]);
     }
+    
+    public function getCode()
+    {
+    	return $this->code;
+    }
 }
 
 ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Storm framework v2 ALPHA
+ * Storm framework v2.1
  * 
  * @author Stormbreaker
  * @copyright 2011
@@ -49,16 +49,11 @@ class StormLoader
 	{
 		if ( $callMagic )
 		{
-			if ( !$this->loaded )
-				$this->CallMagic('load');
-			
 			$magic = $this->CallMagic('call', array($name, $vars));
 			
 			if ( !is_null($magic) )
 				return $magic;
 		}
-		
-		$this->loaded = true;
 		
 		$method = $this->reflection->getMethod($name);
 		
@@ -70,6 +65,12 @@ class StormLoader
 	
 	public function CallMagic($name, $params = array(), $force = false)
 	{
+		if ( !$this->loaded )
+		{
+			$this->loaded = true;
+			$this->CallMagic('load');
+		}
+		
 		if ( !$force && !$this->reflection->hasMethod('_'.$name) )
 			return;
 		
@@ -82,12 +83,60 @@ class StormLoader
 	{
 		if ( is_null($name) )
 			$name = $this->instance->config['default'];
-			
 		
+		try
+		{
+			if ( isset($this->instance->config['routes'][$name]) )
+			{
+				$func = $this->FindBestOverload($this->instance->config['routes'][$name], $params);
+				$name = $func['name'];
+				$p = $func['params'];
+			}
+			elseif ( $this->GetReflection()->HasMethod($name) )
+				$p = self::getLazyParams($this->GetReflection()->GetMethod($name), $params);
+			else
+				throw new NoSuchMethodException();
+		}
+		catch ( InvalidParamsException $e )
+		{
+			$mage = $this->CallMagic('invalidParams', array( $name, $e->getName(), $e->getValue(), $e->getType() ));
+			
+			if ( is_null($mage) )
+				throw $e;
+			else
+				return $mage;
+		}
+			
+		$r = $this->CallMethod($name, $p);
+		
+		if ( $r instanceof IStormResult )
+			return $r->ProcessResult();
+			
+		return $r;
+	}
+	
+	private function FindBestOverload($funcs, $params)
+	{
+		$reflect = $this->GetReflection();
+		
+		usort($funcs, function($func1, $func2) use ($reflect) {
+			return ( $reflect->GetMethod($func1)->getNumberOfParameters() - $reflect->GetMethod($func2)->getNumberOfParameters() );
+		});
+		$funcs = array_reverse($funcs);
+		
+		foreach ( $funcs as $function )
+		{
+			try
+			{
+				return array( 'name' => $function, 'params' => $this->getLazyParams($reflect->getMethod($function), $params) );
+			} catch ( NoRequiredParamsException $e ) {  }
+		}
+		
+		throw new NoRequiredParamsException();
 	}
 	
 	private static function getLazyParams($reflect, $vals = array())
-	{		
+	{	
 		if ( $reflect->getNumberOfParameters() == 0 )
 			return array();
 		
@@ -107,31 +156,20 @@ class StormLoader
 			
 			if ( array_key_exists($name, $vals) )
 			{
-				try
-				{
-					$v = self::parseParam($type, $vals[$name]);
-				} catch (Exception $e)
-				{
-					$r = $this->CallMagic('invalidParams', array( $name, $vals[$name], $type ));
-					
-					if ( is_null($r) )
-						return false;
-					else
-						return $r;
-				}
+				$v = self::parseParam($name, $type, $vals[$name]);
 				
 				$ar[] = $v;
 			}
 			elseif ( $param->isOptional() )
 				$ar[] = $param->getDefaultValue();
 			else
-				return false;
+				throw new NoRequiredParamsException();
 		}
 		
 		return $ar;
 	}
 	
-	private static function parseParam($type, $val)
+	private static function parseParam($name, $type, $val)
 	{
 		if ( $type == 'string' )
 			return $val;
@@ -140,7 +178,7 @@ class StormLoader
 			if ( is_numeric($val) )
 				return (int)$val;
 			else
-				throw new Exception('Invalid argument \''.$val.'\' of type \''.$type.'\'');
+				throw new InvalidParamsException($name, $val, $type);
 		}
 		elseif ( $type == 'bool' || $type == 'boolean' )
 		{
@@ -149,7 +187,7 @@ class StormLoader
 			elseif ( $val === false || $val == '0' || $val == 'false' || $val == 'FALSE' )
 				return false;
 			else
-				throw new Exception('Invalid argument \''.$val.'\' of type \''.$type.'\'');
+				throw new InvalidParamsException($name, $val, $type);
 		}
 		else
 			throw new Exception('Unknown argument type \''.$type.'\'');
@@ -177,4 +215,33 @@ class StormLoader
 }
 
 class NoSuchMethodException extends Exception { }
+class NoRequiredParamsException extends Exception { }
+class InvalidParamsException extends Exception
+{
+	private $type, $val, $name;
+	
+	public function __construct($name, $val, $type)
+	{
+		parent::__construct('Passed argument `'. $name .'` with value \''. $val .'\' that should be of type `'. $type .'`');
+		
+		$this->name = $name;
+		$this->type = $type;
+		$this->val = $val;
+	}
+	
+	public function getName()
+	{
+		return $this->name;
+	}
+	
+	public function getType()
+	{
+		return $this->type;
+	}
+	
+	public function getValue()
+	{
+		return $this->val;
+	}
+}
 ?>

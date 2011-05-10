@@ -1,6 +1,6 @@
 <?php
 /**
- * Storm framework v2 ALPHA
+ * Storm framework v2.1
  * 
  * @author Stormbreaker
  * @copyright 2011

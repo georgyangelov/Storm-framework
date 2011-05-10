@@ -233,21 +233,21 @@ class VirtualPages
 	 */
 	public static function OpenPage($Component, $Page = null)
 	{
-		$c = Storm::$LoadedComponents[$Component];
-		
-		$p = self::getLazyParams($c->GetReflection()->GetMethod($Page), $_GET);
+		try
+		{
+			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, self::$Variables);
 			
-		if ( $p === false )
-			return self::Open404();
-			
-		$r = $c->CallMethod($Page, $p);
-		
-		if ( $r === false )
-			return self::Open404();
-		elseif ( $r instanceof IStormResult )
-			$r->ProcessResult($c, $Page);
-			
-		return $r;
+			if ( $return instanceof Status && $return->getCode() == 404 )
+				self::Open404();
+		}
+		catch ( NoSuchMethodException $e )
+		{
+			self::Open404();
+		}
+		catch ( InvalidParamsException $e )
+		{
+			self::Open404();
+		}
 	}
 	
 	/**
