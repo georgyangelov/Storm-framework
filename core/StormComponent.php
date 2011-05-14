@@ -43,7 +43,7 @@ abstract class StormComponent
 	
 	public static function __callStatic($name, $args)
 	{
-		return Storm::$LoadedComponents[get_called_class()]->CallMethod($name, $args, false);
+		return Storm::$LoadedComponents[get_called_class()]->CallMethod($name, $args);
 	}
 }
 ?>

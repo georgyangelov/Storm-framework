@@ -157,10 +157,7 @@ class VirtualPages
 	private static function SwitchExt($string)
 	{
 		if ( preg_match("/^(.+)\.(.+)$/i", $string, $m) )
-		{
-			if ( '.'.$m[2] != self::$DefaultExtension && $m[2] != self::$DefaultExtension )
-				return $m[1].'__'.$m[2].'__';
-		}
+			return $m[1].'__'.$m[2].'__';
 		
 		return $string;
 	}
@@ -266,7 +263,7 @@ class VirtualPages
 		else
 			throw new Exception("VirtualPages: Default component cannot be loaded! ". Storm::IsLoadedComponent(self::$DefaultComponent));
 		
-		return self::OpenPage($class, self::$DefaultPage);
+		return self::OpenPage($class);
 	}
 	
 	/**
@@ -282,7 +279,7 @@ class VirtualPages
 		if ( preg_match("/^(.+)__(.+)__$/", $page, $m) )
 			$page = $m[1].'.'.$m[2];
 		else
-			$page = $page . self::$DefaultExtension;
+			$page = $page;
 			
 		$vars = '';
 		
@@ -312,7 +309,7 @@ class VirtualPages
 		
 		if ( $component == self::$DefaultComponent || $component === null )
 		{
-			if ( $page == self::$DefaultPage || $page === null )
+			if ( $page === null )
 				return $u.Storm::$RelativePath . "/" . self::ProcessRewrites( $vars, true );
 			else
 				return $u.Storm::$RelativePath . "/" . self::ProcessRewrites( $page . ( $vars != '' ? '/'.$vars : '' ), true );
@@ -322,7 +319,7 @@ class VirtualPages
 			if ( isset(self::$Aliases[$component]) && !empty(self::$Aliases[$component]) )
 				$component = self::$Aliases[$component];
 			
-			if ( $page == self::$DefaultPage || $page === null )
+			if ( $page === null )
 				return $u.Storm::$RelativePath . "/" . self::ProcessRewrites( $component . ( $vars != '' ? '/'.$vars : '' ), true );
 			else
 				return $u.Storm::$RelativePath . "/" . self::ProcessRewrites( $component . '/' . $page . ( $vars != '' ? '/'.$vars : '' ), true );

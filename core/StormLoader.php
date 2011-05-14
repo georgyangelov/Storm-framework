@@ -63,9 +63,9 @@ class StormLoader
 		return $method->invokeArgs($this->instance, $vars);
 	}
 	
-	public function CallMagic($name, $params = array(), $force = false)
+	public function CallMagic($name, $params = array(), $force = false, $callLoad = true)
 	{
-		if ( !$this->loaded )
+		if ( $callLoad && !$this->loaded )
 		{
 			$this->loaded = true;
 			$this->CallMagic('load');
@@ -102,7 +102,9 @@ class StormLoader
 		}
 		catch ( ParamsException $e )
 		{
-			$r = $this->CallMagic('invalidParams', array( $name, $e->getName(), $e->getValue(), $e->getType() ));
+			$v = array( $name, $e->getName(), $e->getValue(), $e->getType() );
+			$r = $this->CallMagic('call', array( $name, $v ));
+			$r = $this->CallMagic('invalidParams', $v );
 			$name = '_invalidParams';
 			
 			if ( is_null($r) )
@@ -244,7 +246,7 @@ class StormLoader
 	
 	public function Unload()
 	{
-		$this->CallMagic('unload');
+		$this->CallMagic('unload', array(), false, false);
 	}
 }
 
