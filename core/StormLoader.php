@@ -103,7 +103,7 @@ class StormLoader
 		catch ( ParamsException $e )
 		{
 			$v = array( $name, $e->getName(), $e->getValue(), $e->getType() );
-			$r = $this->CallMagic('call', array( $name, $v ));
+			$this->CallMagic('call', array( $name, $v ));
 			$r = $this->CallMagic('invalidParams', $v );
 			$name = '_invalidParams';
 			
