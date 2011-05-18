@@ -213,8 +213,8 @@ class VirtualPages
 	{
 		header("HTTP/1.0 404 Not Found");
 		
-		if ( self::$Component404 != null && self::$Page404 != null )
-			return self::OpenPage(self::$Component404, self::$Page404);
+		if ( self::$Component404 != null && self::$Page404 != null && Storm::IsLoadedComponent(self::$Component404) )
+			return self::OpenPage(self::$Component404, self::$Page404, true, false);
 		else
 			exit;
 			
@@ -228,26 +228,35 @@ class VirtualPages
 	 * @param string $Page
 	 * @return mixed The return value of the function in the component
 	 */
-	public static function OpenPage($Component, $Page = null)
+	public static function OpenPage($Component, $Page = null, $withProtected = false, $call404 = true)
 	{
 		try
 		{
-			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, self::$Variables);
+			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, self::$Variables, $withProtected);
 			
-			if ( $return instanceof Status && $return->getInvoke() && $return->getCode() == 404 )
+			if ( $call404 && $return instanceof Status && $return->getInvoke() && $return->getCode() == 404 )
 				self::Open404();
 		}
 		catch ( NoSuchMethodException $e )
 		{
-			self::Open404();
+			if ( $call404 )
+				self::Open404();
+			else
+				throw $e;
 		}
 		catch ( InvalidParamsException $e )
 		{
-			self::Open404();
+			if ( $call404 )
+				self::Open404();
+			else
+				throw $e;
 		}
 		catch ( NoRequiredParamsException $e )
 		{
-			self::Open404();
+			if ( $call404 )
+				self::Open404();
+			else
+				throw $e;
 		}
 	}
 	

@@ -79,7 +79,7 @@ class StormLoader
 		return $this->invokeLazyFunction($method, $params);
 	}
 	
-	public function CallVirtual($name = null, $params = array())
+	public function CallVirtual($name = null, $params = array(), $withProtected = false)
 	{
 		if ( is_null($name) )
 			$name = $this->instance->config['default'];
@@ -94,7 +94,14 @@ class StormLoader
 				$p = $func['params'];
 			}
 			elseif ( $this->GetReflection()->HasMethod($name) )
-				$p = self::getLazyParams($this->GetReflection()->GetMethod($name), $params);
+			{
+				$m = $this->GetReflection()->GetMethod($name);
+				
+				if ( !$m->isProtected() || ( $m->isProtected() && $withProtected ) )
+					$p = self::getLazyParams($m, $params);
+				else
+					throw new NoSuchMethodException($name);
+			}
 			else
 				throw new NoSuchMethodException($name);
 				
