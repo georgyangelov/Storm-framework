@@ -104,8 +104,18 @@ class StormLoader
 			}
 			else
 				throw new NoSuchMethodException($name);
+			
+			try
+			{
+				$r = $this->CallMethod($name, $p);
+			}
+			catch ( Exception $e )
+			{
+				$r = $this->CallMagic('catch', array($name, $e, $p), false, false);
 				
-			$r = $this->CallMethod($name, $p);
+				if ( is_null($r) )
+					throw $e;
+			}
 		}
 		catch ( ParamsException $e )
 		{
@@ -155,7 +165,14 @@ class StormLoader
 		$reflect = $this->GetReflection();
 		
 		usort($funcs, function($func1, $func2) use ($reflect) {
-			return ( $reflect->GetMethod($func1)->getNumberOfParameters() - $reflect->GetMethod($func2)->getNumberOfParameters() );
+			$r1 = $reflect->GetMethod($func1);
+			$r2 = $reflect->GetMethod($func2);
+			
+			$required = ( $r1->getNumberOfRequiredParameters() - $r2->getNumberOfRequiredParameters() );
+			if ( $required != 0 )
+				return $required;
+			
+			return ( $r1->getNumberOfParameters() - $r2->getNumberOfParameters() );
 		});
 		$funcs = array_reverse($funcs);
 		
