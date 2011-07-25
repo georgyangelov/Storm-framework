@@ -16,6 +16,9 @@ abstract class StormModel
 	
 	public static function __callStatic($name, $args)
 	{
+		if ( !isset(self::$instances[get_called_class()]) )
+			throw new Exception('ERROR! Did you forget to call "parent::__construct()" in your model\'s constructor?');
+		
 		$obj = self::$instances[get_called_class()];
 		
 		try

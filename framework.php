@@ -47,6 +47,8 @@ class Storm
 		if ( class_exists($name, false) )
 			return;
         
+		$name = preg_replace("/^\\?class\\(.*)/", "$1", $name);
+		
 		$path = Storm::FixPath(self::$AbsolutePath ."/". self::$ClassesPath ."/". $name .".php");
 		if ( is_file($path) )
 			require_once $path;
@@ -68,6 +70,8 @@ class Storm
 	{
 		if ( class_exists($name, false) )
 			return;
+		
+		$name = preg_replace("/^\\?model\\(.*)/", "$1", $name);
 		
 		$path = Storm::FixPath(self::$AbsolutePath ."/". self::$ModelsPath ."/". $name .".php");
 		if ( is_file($path) )

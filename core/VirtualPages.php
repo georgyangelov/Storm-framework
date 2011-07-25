@@ -341,9 +341,12 @@ class VirtualPages
 	 * 
 	 * @return string The URL
 	 */
-	 public static function GetCanonical($WithDomain = true)
+	 public static function GetCanonical($WithDomain = true, $IgnoredParams = array())
 	 {
-	 	return self::GetLink(self::$Component, self::$Page, null, true, $WithDomain);
+	 	if ( count($IgnoredParams) > 0 )
+	 		return self::GetLink(self::$Component, self::$Page, array_diff_key(self::$Variables, array_flip($IgnoredParams)), false, $WithDomain);
+	 	else
+	 		return self::GetLink(self::$Component, self::$Page, null, true, $WithDomain);
 	 }
 	
 	/**
