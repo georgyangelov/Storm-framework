@@ -232,7 +232,7 @@ class VirtualPages
 	{
 		try
 		{
-			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, self::$Variables, $withProtected);
+			$return = Storm::$LoadedComponents[$Component]->CallVirtual($Page, $_GET, $withProtected);
 			
 			if ( $call404 && $return instanceof Status && $return->getInvoke() && $return->getCode() == 404 )
 				self::Open404();

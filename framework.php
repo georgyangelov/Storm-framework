@@ -42,12 +42,19 @@ class Storm
 		self::$Container->callLoad();		
 	}
 	
+	public static function RequireFile($path)
+	{
+		$path = Storm::FixPath(self::$AbsolutePath ."/". self::$ClassesPath ."/". $path);
+		
+		require_once $path;
+	}
+	
 	public static function LoadClass($name)
 	{
 		if ( class_exists($name, false) )
 			return;
         
-		$name = preg_replace("/^\\?class\\(.*)/", "$1", $name);
+		$name = preg_replace("/^\\\?class\\\(.*)/", "$1", $name);
 		
 		$path = Storm::FixPath(self::$AbsolutePath ."/". self::$ClassesPath ."/". $name .".php");
 		if ( is_file($path) )
@@ -66,18 +73,18 @@ class Storm
         elseif ( is_file(Storm::FixPath(self::$AbsolutePath ."/". self::$CorePath ."/". $name .".class.php")) )
             require_once Storm::FixPath(self::$AbsolutePath ."/". self::$CorePath ."/". $name .".class.php");
 	}
-	public static function LoadModel($name)
+	public static function LoadModel($realname)
 	{
-		if ( class_exists($name, false) )
+		if ( class_exists($realname, false) )
 			return;
 		
-		$name = preg_replace("/^\\?model\\(.*)/", "$1", $name);
+		$name = preg_replace("/^\\\?model\\\(.*)/", "$1", $realname);
 		
 		$path = Storm::FixPath(self::$AbsolutePath ."/". self::$ModelsPath ."/". $name .".php");
 		if ( is_file($path) )
 		{
 			require_once $path;
-			return self::$Container->get($name);
+			return self::$Container->get($realname);
 		}
 	}
 	
@@ -85,7 +92,7 @@ class Storm
 	{
 		if ( self::IsLoadedComponent($name) )
 			return;
-		
+			
 		require_once realpath(self::$AbsolutePath .'/'. self::$ComponentsPath .'/'. $name .'/'. $name .'.php');
 		
 		self::$LoadedComponents[$name] = new StormLoader($name);

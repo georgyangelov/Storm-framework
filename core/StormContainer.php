@@ -32,8 +32,11 @@ abstract class StormContainer
 		}
 	}
 	
-	public function get($name)
+	public function get($realname)
 	{
+		$name = str_replace('\\', '_', $realname);
+		$name = preg_replace("/^_?model_(.*)/", "$1", $name);
+		
 		if ( isset($this->methods[$name]) )
 			return $this->methods[$name];
 		
@@ -43,15 +46,15 @@ abstract class StormContainer
 		}
 		catch ( ReflectionException $e )
 		{
-			$constructor = new ReflectionMethod($name, '__construct');
+			$constructor = new ReflectionMethod($realname, '__construct');
 			
 			if ( $constructor->getNumberOfRequiredParameters() == 0 )
 			{
-				$this->methods[$name] = new $name();
+				$this->methods[$name] = new $realname();
 				return $this->methods[$name];
 			}
 			else
-				throw new Exception('Tried to access model "'.$name.'" but it cannot be automatically created. Please use the container.');
+				throw new Exception('Tried to access model "'.$realname.'" but it cannot be automatically created. Please use the container.');
 		}
 		
 		$method->setAccessible(true);

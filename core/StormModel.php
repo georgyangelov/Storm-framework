@@ -27,6 +27,12 @@ abstract class StormModel
 			
 			if ( $method->isProtected() )
 			{
+				foreach ( $method->getParameters() as $k => $param )
+				{
+					if ( $param->isPassedByReference() )
+						$args[$k] =& $args[$k];
+				}
+				
 				$method->setAccessible(true);
 				return $method->invokeArgs($obj, $args);
 			}
